@@ -7,6 +7,8 @@ from functools import wraps
 app = Flask(__name__)
 app.secret_key = "camera_system_secret_2120"
 
+
+
 DB_PATH = "cameras.db"
 
 
@@ -31,22 +33,8 @@ def init_db():
             extra_data  TEXT DEFAULT '{}'
         )
     """)
-    # Тестовые камеры
-    # sample = [
-    #     ("CAM_101_1", "Камера 101 (вход)",    1, 150.0, 200.0, "online",  "Главный вход в кабинет 101", "Кабинет 101", "{}"),
-    #     ("CAM_102_1", "Камера 102 (коридор)", 1, 300.0, 180.0, "offline", "Коридор у кабинета 102",     "Коридор 1 этаж", "{}"),
-    #     ("CAM_201_1", "Камера 201 (вход)",    2, 200.0, 150.0, "online",  "Вход на 2 этаж",             "Лестница 2 этаж", "{}"),
-    #     ("CAM_301_1", "Камера 301",           3, 250.0, 220.0, "online",  "Кабинет директора",          "Кабинет 301", "{}"),
-    # ]
-    # cur.executemany("""
-    #     INSERT OR IGNORE INTO cameras
-    #     (id, name, floor, svg_x, svg_y, status, description, location, extra_data)
-    #     VALUES (?,?,?,?,?,?,?,?,?)
-    # """, sample)
-    # conn.commit()
-    # conn.close()
 
-# ── Декоратор авторизации ──────────────────────────────────────────
+#Декоратор авторизации 
 def login_required(f):
     @wraps(f)
     def decorated(*args, **kwargs):
@@ -57,7 +45,7 @@ def login_required(f):
         return f(*args, **kwargs)
     return decorated
 
-# ── Страницы ───────────────────────────────────────────────────────
+# Страницы
 @app.route("/")
 def index():
     if session.get("logged_in"):
@@ -80,7 +68,7 @@ def dashboard():
 def admin_page():
     return render_template("admin.html", username=session.get("username"))
 
-# ── API Auth ───────────────────────────────────────────────────────
+
 @app.route("/api/login", methods=["POST"])
 def api_login():
     data = request.get_json()
@@ -193,3 +181,5 @@ def get_svg(floor):
 if __name__ == "__main__":
     init_db()
     app.run(debug=True, port=5001)
+
+    
