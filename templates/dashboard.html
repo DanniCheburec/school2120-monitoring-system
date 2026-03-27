@@ -644,7 +644,7 @@ let cameras = [];
 let scale = 1, panX = 0, panY = 0;
 let dragging = false, startX, startY, startPanX, startPanY;
 
-// ── Загрузка данных ──────────────────────────────────────────────
+//  Загрузка данных 
 async function loadAll() {
   const res = await fetch('/api/cameras');
   cameras = await res.json();
@@ -656,7 +656,7 @@ function getCamsOnFloor(floor) {
   return cameras.filter(c => c.floor === floor);
 }
 
-// ── Боковая панель ───────────────────────────────────────────────
+//  Боковая панель 
 function renderSidebar() {
   const all = cameras;
   document.getElementById('statOnline').textContent  = all.filter(c => c.status === 'online').length;
