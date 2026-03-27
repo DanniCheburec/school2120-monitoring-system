@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Система мониторинга камер — Школа 2120</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:        #515e78;
+    --panel:     #0d1322;
+    --border:    #1e2d4a;
+    --accent:    #00d4ff;
+    --accent2:   #0066ff;
+    --danger:    #ff3b5c;
+    --text:      #c8d8f0;
+    --text-dim:  #4a6080;
+    --green:     #00ff88;
+    --mono:      'Share Tech Mono', monospace;
+    --sans:      'Rajdhani', sans-serif;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+  }
+
+
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(0,212,255,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,212,255,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+  }
+
+  body::after {
+    content: '';
+    position: fixed;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    width: 600px; height: 600px;
+    background: radial-gradient(circle, rgba(0,102,255,0.08) 0%, transparent 70%);
+    pointer-events: none;
+  }
+
+  .login-wrap {
+    position: relative;
+    z-index: 10;
+    width: 380px;
+  }
+
+  .logo-area {
+    text-align: center;
+    margin-bottom: 32px;
+  }
+
+  .logo-icon {
+    width: 56px; height: 56px;
+    border: 2px solid var(--accent);
+    border-radius: 12px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 16px;
+    box-shadow: 0 0 20px rgba(0,212,255,0.3), inset 0 0 20px rgba(0,212,255,0.05);
+    position: relative;
+  }
+
+  .logo-icon svg {
+    width: 28px; height: 28px;
+    color: var(--accent);
+  }
+
+  .logo-icon::after {
+    content: '';
+    position: absolute;
+    inset: -4px;
+    border-radius: 15px;
+    border: 1px solid rgba(0,212,255,0.2);
+  }
+
+  .logo-title {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 4px;
+    color: var(--accent);
+    text-transform: uppercase;
+    margin-bottom: 4px;
+  }
+
+  .logo-sub {
+    font-size: 20px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    color: var(--text);
+  }
+
+  .panel {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 32px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .panel::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--accent), transparent);
+  }
+
+  .panel-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 3px;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    margin-bottom: 24px;
+  }
+
+  .field {
+    margin-bottom: 20px;
+  }
+
+  .field label {
+    display: block;
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 2px;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+
+  .field input {
+    width: 100%;
+    background: rgba(0,212,255,0.04);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 12px 14px;
+    font-family: var(--mono);
+    font-size: 14px;
+    color: var(--text);
+    outline: none;
+    transition: border-color .2s, box-shadow .2s;
+  }
+
+  .field input:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(0,212,255,0.1);
+  }
+
+  .field input::placeholder { color: var(--text-dim); }
+
+  .btn-login {
+    width: 100%;
+    background: linear-gradient(135deg, var(--accent2), var(--accent));
+    border: none;
+    border-radius: 6px;
+    padding: 14px;
+    font-family: var(--sans);
+    font-size: 15px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: #fff;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+    transition: opacity .2s, transform .15s;
+    margin-top: 8px;
+  }
+
+  .btn-login:hover { opacity: .9; transform: translateY(-1px); }
+  .btn-login:active { transform: translateY(0); }
+
+  .btn-login.loading {
+    pointer-events: none;
+    opacity: .7;
+  }
+
+  .error-msg {
+    display: none;
+    margin-top: 16px;
+    padding: 10px 14px;
+    background: rgba(255,59,92,0.1);
+    border: 1px solid rgba(255,59,92,0.3);
+    border-radius: 6px;
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--danger);
+    letter-spacing: 1px;
+  }
+
+  .error-msg.show { display: block; }
+
+  .status-bar {
+    margin-top: 20px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--text-dim);
+    letter-spacing: 1px;
+  }
+
+  .status-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--green);
+    box-shadow: 0 0 6px var(--green);
+    animation: blink 2s infinite;
+  }
+
+  @keyframes blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: .3; }
+  }
+
+  @keyframes scanline {
+    0% { transform: translateY(-100%); }
+    100% { transform: translateY(100vh); }
+  }
+
+  .scanline {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(transparent, rgba(0,212,255,0.15), transparent);
+    animation: scanline 4s linear infinite;
+    pointer-events: none;
+    z-index: 1;
+  }
+</style>
+</head>
+<body>
+<div class="scanline"></div>
+
+<div class="login-wrap">
+  <div class="logo-area">
+    <div class="logo-icon">
+      <svg viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg"><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g><g id="SVGRepo_iconCarrier"> <path d="M3.23047 15.6021V19.6021M3.23047 17.6021H6.10979C6.51355 17.6021 6.71543 17.6021 6.88849 17.5357C7.04136 17.477 7.17748 17.3816 7.28489 17.258C7.40648 17.1181 7.47547 16.9283 7.61345 16.5489L9.23047 12.1021M16.2305 14.1021L17.9671 14.9704C18.4144 15.1941 18.638 15.3059 18.8584 15.3124C19.0525 15.3182 19.2441 15.2673 19.4098 15.166C19.5979 15.051 19.7366 14.843 20.014 14.4269L20.2251 14.1102C20.5726 13.589 20.7463 13.3284 20.7669 13.0693C20.785 12.8418 20.7248 12.615 20.5962 12.4265C20.4497 12.2117 20.1696 12.0717 19.6094 11.7916L19.2305 11.6021M4.09035 7.62803L5.96145 4.42043C6.23184 3.9569 6.36703 3.72514 6.56088 3.59657C6.73149 3.48341 6.93273 3.42534 7.13741 3.43022C7.36995 3.43575 7.60783 3.55986 8.0836 3.80809L15.9789 7.92736C16.7263 8.31731 17.1 8.51229 17.2454 8.78849C17.3725 9.02974 17.3955 9.31242 17.3092 9.57107C17.2104 9.86717 16.8732 10.1201 16.1988 10.6259L13.0216 13.0088C12.7344 13.2242 12.5908 13.3319 12.4312 13.3832C12.2901 13.4286 12.1407 13.4421 11.9938 13.4227C11.8276 13.4007 11.6671 13.3204 11.346 13.1599L4.75685 9.8653C4.22599 9.59987 3.96056 9.46716 3.81581 9.26293C3.6886 9.08344 3.62413 8.86702 3.63238 8.64718C3.64176 8.39703 3.79129 8.1407 4.09035 7.62803Z" stroke="#000000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path> </g></svg>
+    </div>
+    <div class="logo-title">CCTV Monitor</div>
+    <div class="logo-sub">Школа 2120</div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-label">// Авторизация</div>
+
+    <div class="field">
+      <label>Логин</label>
+      <input type="text" id="username" placeholder="введите логин" autocomplete="off">
+    </div>
+
+    <div class="field">
+      <label>Пароль</label>
+      <input type="password" id="password" placeholder="••••••••">
+    </div>
+
+    <button class="btn-login" id="loginBtn" onclick="doLogin()">Войти</button>
+
+    <div class="error-msg" id="errMsg"></div>
+
+    <div class="status-bar">
+      <div class="status-dot"></div>
+      СИСТЕМА АКТИВНА · ШКОЛА 2120 Ш6
+    </div>
+  </div>
+</div>
+
+<script>
+
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Enter') doLogin();
+  });
+
+  async function doLogin() {
+    const btn = document.getElementById('loginBtn');
+    const err = document.getElementById('errMsg');
+    const username = document.getElementById('username').value.trim();
+    const password = document.getElementById('password').value;
+
+    if (!username || !password) {
+      showError('Введите логин и пароль');
+      return;
+    }
+
+    btn.classList.add('loading');
+    btn.textContent = 'Проверка...';
+    err.classList.remove('show');
+
+    try {
+      const res = await fetch('/api/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password })
+      });
+      const data = await res.json();
+      if (data.ok) {
+        btn.textContent = 'Доступ разрешён ✓';
+        setTimeout(() => window.location.href = '/dashboard', 500);
+      } else {
+        showError(data.error || 'Ошибка авторизации');
+        btn.classList.remove('loading');
+        btn.textContent = 'Войти';
+      }
+    } catch {
+      showError('Ошибка соединения с сервером');
+      btn.classList.remove('loading');
+      btn.textContent = 'Войти';
+    }
+  }
+
+  function showError(msg) {
+    const err = document.getElementById('errMsg');
+    err.textContent = msg;
+    err.classList.add('show');
+  }
+</script>
+</body>
+</html>
