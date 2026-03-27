@@ -1,0 +1,1019 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Управление камерами — Школа 2120</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:        #515e78;
+    --panel:     #0d1322;
+    --panel2:    #111827;
+    --border:    #1e2d4a;
+    --accent:    #00d4ff;
+    --accent2:   #0066ff;
+    --danger:    #ff3b5c;
+    --warn:      #ffaa00;
+    --text:      #c8d8f0;
+    --text-dim:  #4a6080;
+    --green:     #00ff88;
+    --mono:      'Share Tech Mono', monospace;
+    --sans:      'Rajdhani', sans-serif;
+    --header:    56px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  header {
+    height: var(--header);
+    background: var(--panel);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    padding: 0 20px;
+    gap: 16px;
+    flex-shrink: 0;
+    position: relative;
+  }
+
+  header::after {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--warn), transparent);
+    opacity: 0.4;
+  }
+
+  .header-logo {
+    font-family: var(--mono);
+    font-size: 13px;
+    color: var(--warn);
+    letter-spacing: 2px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .header-logo svg { width: 18px; height: 18px; }
+
+  .header-divider { width: 1px; height: 24px; background: var(--border); }
+
+  .header-title { font-size: 16px; font-weight: 700; letter-spacing: 1px; }
+
+  .header-right {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .btn-icon {
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 6px 12px;
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text-dim);
+    cursor: pointer;
+    letter-spacing: 1px;
+    transition: all .2s;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .btn-icon:hover { border-color: var(--accent); color: var(--accent); }
+
+  /* ── Main layout ── */
+  .main {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+  }
+
+  /* ── Left panel: table ── */
+  .table-panel {
+    width: 400px;
+    background: var(--panel);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0;
+    overflow: hidden;
+  }
+
+  .panel-header {
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .panel-title {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 3px;
+    color: var(--text-dim);
+    text-transform: uppercase;
+  }
+
+  .btn-add {
+    background: rgba(0,212,255,0.1);
+    border: 1px solid var(--accent);
+    border-radius: 6px;
+    padding: 6px 14px;
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--accent);
+    cursor: pointer;
+    letter-spacing: 1px;
+    transition: all .2s;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .btn-add:hover { background: rgba(0,212,255,0.2); }
+
+  /* Floor tabs */
+  .floor-tabs {
+    display: flex;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .floor-tab {
+    flex: 1;
+    padding: 10px;
+    background: transparent;
+    border: none;
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text-dim);
+    cursor: pointer;
+    letter-spacing: 2px;
+    border-bottom: 2px solid transparent;
+    transition: all .2s;
+  }
+
+  .floor-tab:hover { color: var(--text); }
+
+  .floor-tab.active {
+    color: var(--accent);
+    border-bottom-color: var(--accent);
+  }
+
+  .cam-table {
+    flex: 1;
+    overflow-y: auto;
+  }
+
+  .cam-table::-webkit-scrollbar { width: 4px; }
+  .cam-table::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+  .cam-row {
+    display: flex;
+    align-items: center;
+    padding: 10px 16px;
+    border-bottom: 1px solid rgba(30,45,74,0.5);
+    gap: 10px;
+    transition: background .15s;
+  }
+
+  .cam-row:hover { background: rgba(255,255,255,0.03); }
+
+  .cam-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .cam-dot.online  { background: var(--green); box-shadow: 0 0 6px var(--green); }
+  .cam-dot.offline { background: var(--danger); }
+
+  .cam-info { flex: 1; overflow: hidden; }
+
+  .cam-row-name {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .cam-row-sub {
+    font-family: var(--mono);
+    font-size: 9px;
+    color: var(--text-dim);
+    letter-spacing: 1px;
+    margin-top: 2px;
+  }
+
+  .row-actions { display: flex; gap: 4px; }
+
+  .action-btn {
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    padding: 4px 8px;
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--text-dim);
+    cursor: pointer;
+    letter-spacing: 1px;
+    transition: all .2s;
+  }
+
+  .action-btn:hover { border-color: var(--warn); color: var(--warn); }
+  .action-btn.danger:hover { border-color: var(--danger); color: var(--danger); }
+  .action-btn.toggle-on { color: var(--green); border-color: rgba(0,255,136,0.3); }
+  .action-btn.toggle-off { color: var(--danger); border-color: rgba(255,59,92,0.3); }
+
+  .empty-state {
+    padding: 40px;
+    text-align: center;
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text-dim);
+    letter-spacing: 1px;
+  }
+
+  /* ── Right panel: map + form ── */
+  .right-panel {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  /* Форма добавления */
+  .add-form {
+    display: none;
+    background: var(--panel);
+    border-bottom: 1px solid var(--border);
+    padding: 16px 20px;
+    flex-shrink: 0;
+  }
+
+  .add-form.show { display: block; }
+
+  .form-title {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 3px;
+    color: var(--warn);
+    margin-bottom: 14px;
+    text-transform: uppercase;
+  }
+
+  .form-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    margin-bottom: 12px;
+  }
+
+  .form-field { display: flex; flex-direction: column; gap: 4px; }
+
+  .form-field.full { grid-column: 1 / -1; }
+  .form-field.half { grid-column: span 2; }
+
+  .form-label {
+    font-family: var(--mono);
+    font-size: 9px;
+    letter-spacing: 2px;
+    color: var(--text-dim);
+    text-transform: uppercase;
+  }
+
+  .form-input, .form-select {
+    background: rgba(0, 213, 255, 0.247);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 8px 10px;
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--text);
+    outline: none;
+    transition: border-color .2s;
+    width: 100%;
+  }
+
+  .form-input:focus, .form-select:focus {
+    border-color: var(--accent);
+  }
+
+  .form-input.coord-filled {
+    border-color: rgba(0,255,136,0.4);
+    background: rgba(0,255,136,0.04);
+  }
+
+  .form-select { appearance: none; }
+
+  .coord-hint {
+    font-family: var(--mono);
+    font-size: 9px;
+    color: var(--warn);
+    letter-spacing: 1px;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .coord-hint.done { color: var(--green); }
+
+  .blink { animation: blink 1s infinite; }
+  @keyframes blink { 0%,100%{opacity:1}50%{opacity:.3} }
+
+  .form-actions { display: flex; gap: 8px; }
+
+  .btn-primary {
+    background: linear-gradient(135deg, var(--accent2), var(--accent));
+    border: none;
+    border-radius: 6px;
+    padding: 9px 20px;
+    font-family: var(--mono);
+    font-size: 11px;
+    color: #fff;
+    cursor: pointer;
+    letter-spacing: 2px;
+    transition: opacity .2s;
+  }
+
+  .btn-primary:hover { opacity: .9; }
+
+  .btn-cancel {
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 9px 20px;
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text-dim);
+    cursor: pointer;
+    letter-spacing: 1px;
+    transition: all .2s;
+  }
+
+  .btn-cancel:hover { border-color: var(--danger); color: var(--danger); }
+
+  /* ── Map ── */
+  .map-area {
+    flex: 1;
+    position: relative;
+    overflow: hidden;
+    background-image:
+      linear-gradient(rgba(0,212,255,0.02) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,212,255,0.02) 1px, transparent 1px);
+    background-size: 30px 30px;
+  }
+
+  .map-toolbar {
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    padding: 8px 16px;
+    background: rgba(13,19,34,0.9);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--text-dim);
+    letter-spacing: 1px;
+    z-index: 50;
+    backdrop-filter: blur(4px);
+  }
+
+  .map-toolbar .accent { color: var(--accent); }
+  .map-toolbar .warn { color: var(--warn); }
+
+  .place-mode-indicator {
+    display: none;
+    background: rgba(255,170,0,0.1);
+    border: 1px solid rgba(255,170,0,0.4);
+    border-radius: 4px;
+    padding: 3px 10px;
+    color: var(--warn);
+    font-size: 10px;
+    letter-spacing: 1px;
+    animation: blink 1.5s infinite;
+  }
+
+  .place-mode-indicator.show { display: inline-block; }
+
+  #svgContainer {
+    position: absolute;
+    inset: 36px 0 0 0;
+    cursor: grab;
+    user-select: none;
+  }
+
+  #svgContainer:active { cursor: grabbing; }
+  #svgContainer.placing { cursor: crosshair !important; }
+
+  #svgContainer svg { width: 100%; height: 100%; }
+
+  .zoom-controls {
+    position: absolute;
+    bottom: 20px;
+    right: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    z-index: 50;
+  }
+
+  .zoom-btn {
+    width: 36px; height: 36px;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text-dim);
+    font-size: 18px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all .2s;
+  }
+
+  .zoom-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+  /* Toast */
+  .toast {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%) translateY(80px);
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px 24px;
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--text);
+    letter-spacing: 1px;
+    z-index: 9999;
+    transition: transform .3s ease;
+    pointer-events: none;
+  }
+
+  .toast.show { transform: translateX(-50%) translateY(0); }
+  .toast.success { border-color: rgba(0,255,136,0.4); color: var(--green); }
+  .toast.error   { border-color: rgba(255,59,92,0.4); color: var(--danger); }
+
+  /* Confirm modal */
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(8,12,20,0.8);
+    z-index: 500;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .modal-overlay.show { display: flex; }
+
+  .modal {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 28px;
+    min-width: 320px;
+  }
+
+  .modal-title {
+    font-size: 16px;
+    font-weight: 700;
+    margin-bottom: 8px;
+    color: var(--danger);
+  }
+
+  .modal-text {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text-dim);
+    letter-spacing: 1px;
+    margin-bottom: 20px;
+    line-height: 1.6;
+  }
+
+  .modal-actions { display: flex; gap: 8px; justify-content: flex-end; }
+
+  .btn-danger {
+    background: rgba(255,59,92,0.1);
+    border: 1px solid var(--danger);
+    border-radius: 6px;
+    padding: 8px 18px;
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--danger);
+    cursor: pointer;
+    letter-spacing: 1px;
+    transition: background .2s;
+  }
+
+  .btn-danger:hover { background: rgba(255,59,92,0.2); }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-logo">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+      <path d="M12 20h9M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/>
+    </svg>
+    ADMIN
+  </div>
+  <div class="header-divider"></div>
+  <div class="header-title">Управление камерами</div>
+
+  <div class="header-right">
+    <a href="/dashboard" class="btn-icon">← Просмотр</a>
+    <button class="btn-icon" onclick="logout()">Выйти</button>
+  </div>
+</header>
+
+<div class="main">
+  <!-- Таблица камер -->
+  <div class="table-panel">
+    <div class="panel-header">
+      <div class="panel-title">// Все камеры</div>
+      <button class="btn-add" onclick="showAddForm()">+ Добавить</button>
+    </div>
+
+    <div class="floor-tabs">
+      <button class="floor-tab active" onclick="setFloor(0, this)">ВСЕ</button>
+      <button class="floor-tab" onclick="setFloor(1, this)">ЭТАЖ 1</button>
+      <button class="floor-tab" onclick="setFloor(2, this)">ЭТАЖ 2</button>
+      <button class="floor-tab" onclick="setFloor(3, this)">ЭТАЖ 3</button>
+    </div>
+
+    <div class="cam-table" id="camTable"></div>
+  </div>
+
+  <!-- Правая панель -->
+  <div class="right-panel">
+    <!-- Форма добавления -->
+    <div class="add-form" id="addForm">
+      <div class="form-title">// Новая камера</div>
+
+      <div class="coord-hint" id="coordHint">
+        <span class="blink">▶</span> Кликните по карте, чтобы выбрать место установки камеры
+      </div>
+
+      <div class="form-grid">
+        <div class="form-field">
+          <div class="form-label">ID камеры *</div>
+          <input type="text" class="form-input" id="fId" placeholder="CAM_101_1">
+        </div>
+        <div class="form-field half">
+          <div class="form-label">Название *</div>
+          <input type="text" class="form-input" id="fName" placeholder="Камера 101 (вход)">
+        </div>
+        <div class="form-field">
+          <div class="form-label">Этаж *</div>
+          <select class="form-select" id="fFloor" onchange="onFloorChange()" style="color: rgb(216, 134, 10);">
+            <option value="1">1 этаж</option>
+            <option value="2">2 этаж</option>
+            <option value="3">3 этаж</option>
+          </select>
+        </div>
+        <div class="form-field half">
+          <div class="form-label">Локация</div>
+          <input type="text" class="form-input" id="fLocation" placeholder="Кабинет 101">
+        </div>
+        <div class="form-field">
+          <div class="form-label">X (авто)</div>
+          <input type="number" class="form-input" id="fX" placeholder="—" readonly>
+        </div>
+        <div class="form-field">
+          <div class="form-label">Y (авто)</div>
+          <input type="number" class="form-input" id="fY" placeholder="—" readonly>
+        </div>
+        <div class="form-field">
+          <div class="form-label">Статус</div>
+          <select class="form-select" id="fStatus">
+            <option value="online">Онлайн</option>
+            <option value="offline">Офлайн</option>
+          </select>
+        </div>
+        <div class="form-field full">
+          <div class="form-label">Описание</div>
+          <input type="text" class="form-input" id="fDesc" placeholder="Дополнительная информация">
+        </div>
+      </div>
+
+      <div class="form-actions">
+        <button class="btn-primary" onclick="saveCamera()">СОХРАНИТЬ</button>
+        <button class="btn-cancel" onclick="hideAddForm()">ОТМЕНА</button>
+      </div>
+    </div>
+
+    <!-- Карта -->
+    <div class="map-area">
+      <div class="map-toolbar">
+        ЭТАЖ: <span class="accent" id="mapFloorLabel">1</span>
+        &nbsp;·&nbsp;
+        <span class="place-mode-indicator" id="placeModeIndicator">▶ РЕЖИМ РАЗМЕЩЕНИЯ — КЛИКНИТЕ НА КАРТЕ</span>
+        <span id="normalModeLabel">scroll = зум · drag = перемещение</span>
+      </div>
+      <div id="svgContainer"></div>
+      <div class="zoom-controls">
+        <button class="zoom-btn" onclick="zoomIn()">+</button>
+        <button class="zoom-btn" onclick="zoomReset()">⊙</button>
+        <button class="zoom-btn" onclick="zoomOut()">−</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Confirm modal -->
+<div class="modal-overlay" id="confirmModal">
+  <div class="modal">
+    <div class="modal-title">Удалить камеру?</div>
+    <div class="modal-text" id="confirmText"></div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeModal()">Отмена</button>
+      <button class="btn-danger" onclick="confirmDelete()">Удалить</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+let cameras = [];
+let filterFloor = 0;
+let mapFloor = 1;
+let placingMode = false;
+let pendingDelete = null;
+
+// Zoom/pan state
+let scale = 1, panX = 0, panY = 0;
+let dragging = false, startX, startY, startPanX, startPanY;
+
+//  Загрузка 
+async function loadCameras() {
+  const res = await fetch('/api/cameras');
+  cameras = await res.json();
+  renderTable();
+  renderMap();
+}
+
+// Таблица 
+function setFloor(floor, btn) {
+  filterFloor = floor;
+  document.querySelectorAll('.floor-tab').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+  renderTable();
+}
+
+function renderTable() {
+  const filtered = filterFloor === 0
+    ? cameras
+    : cameras.filter(c => c.floor === filterFloor);
+
+  const container = document.getElementById('camTable');
+
+  if (filtered.length === 0) {
+    container.innerHTML = '<div class="empty-state">НЕТ КАМЕР</div>';
+    return;
+  }
+
+  container.innerHTML = filtered.map(c => `
+    <div class="cam-row" id="row-${c.id}">
+      <div class="cam-dot ${c.status}"></div>
+      <div class="cam-info">
+        <div class="cam-row-name">${c.name}</div>
+        <div class="cam-row-sub">${c.id} · Этаж ${c.floor}${c.location ? ' · ' + c.location : ''}</div>
+      </div>
+      <div class="row-actions">
+        <button class="action-btn ${c.status === 'online' ? 'toggle-on' : 'toggle-off'}"
+                onclick="toggleStatus('${c.id}')">
+          ${c.status === 'online' ? 'ON' : 'OFF'}
+        </button>
+        <button class="action-btn danger" onclick="askDelete('${c.id}', '${c.name.replace(/'/g,"\'")}')">
+          ✕
+        </button>
+      </div>
+    </div>
+  `).join('');
+}
+
+// Карта 
+async function renderMap() {
+  const container = document.getElementById('svgContainer');
+  document.getElementById('mapFloorLabel').textContent = mapFloor;
+
+  try {
+    const res = await fetch(`/api/svg/${mapFloor}`);
+    let svgText = await res.text();
+    svgText = svgText.replace(/<svg([^>]*)width="[^"]*"/, '<svg$1');
+    svgText = svgText.replace(/<svg([^>]*)height="[^"]*"/, '<svg$1');
+    svgText = svgText.replace('<svg', '<svg preserveAspectRatio="xMidYMid meet" style="width:100%;height:100%"');
+    container.innerHTML = svgText;
+  } catch {
+    container.innerHTML = `<svg viewBox="0 0 800 500" style="width:100%;height:100%">
+      <rect width="800" height="500" fill="#0d1322"/>
+      <text x="400" y="250" text-anchor="middle" fill="#4a6080" font-size="16" font-family="monospace">SVG этажа ${mapFloor} не найден — поместите Floor${mapFloor}_G.svg рядом с app.py</text>
+    </svg>`;
+  }
+
+  // Маркеры существующих камер
+  const svg = container.querySelector('svg');
+  if (!svg) return;
+
+  const overlay = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+  overlay.id = 'cam-overlay';
+
+  cameras.filter(c => c.floor === mapFloor).forEach(cam => {
+    const color = cam.status === 'online' ? '#00ff88' : '#ff3b5c';
+    const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+
+    const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+    circle.setAttribute('cx', cam.svg_x);
+    circle.setAttribute('cy', cam.svg_y);
+    circle.setAttribute('r', '3');
+    circle.setAttribute('fill', color);
+    circle.setAttribute('stroke', '#0d1322');
+    circle.setAttribute('stroke-width', '1');
+    circle.style.filter = `drop-shadow(0 0 5px ${color})`;
+
+    const label = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+    label.setAttribute('x', cam.svg_x);
+    label.setAttribute('y', cam.svg_y + 12);
+    label.setAttribute('text-anchor', 'middle');
+    label.setAttribute('font-size', '7');
+    label.setAttribute('fill', color);
+    label.setAttribute('pointer-events', 'none');
+    label.setAttribute('font-family', 'monospace');
+    label.textContent = cam.id;
+
+    g.appendChild(circle);
+    g.appendChild(label);
+    overlay.appendChild(g);
+  });
+
+  svg.appendChild(overlay);
+
+
+  svg.addEventListener('click', onMapClick);
+
+  applyTransform();
+  setupDrag();
+}
+
+function onMapClick(e) {
+  // if (!placingMode) return;
+  
+  if (!placingMode) return;
+  if (e.button !== 0) return;
+  const svg = document.querySelector('#svgContainer svg');
+
+  const pt = svg.createSVGPoint();
+  pt.x = e.clientX;
+  pt.y = e.clientY;
+
+  const svgPoint = pt.matrixTransform(svg.getScreenCTM().inverse());
+
+  const svgX = Math.round(svgPoint.x);
+  const svgY = Math.round(svgPoint.y);
+
+  document.getElementById('fX').value = svgX;
+  document.getElementById('fY').value = svgY;
+
+  drawPreviewMarker(svgX, svgY);
+}
+
+function drawPreviewMarker(x, y) {
+  const svg = document.querySelector('#svgContainer svg');
+  let prev = svg.querySelector('#preview-marker');
+  if (prev) prev.remove();
+
+  const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+  g.id = 'preview-marker';
+
+  const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+  circle.setAttribute('cx', x);
+  circle.setAttribute('cy', y);
+  circle.setAttribute('r', '3');
+  circle.setAttribute('fill', '#ffaa00');
+  circle.setAttribute('stroke', '#0d1322');
+  circle.setAttribute('stroke-width', '1');
+  circle.setAttribute('stroke-dasharray', '3 2');
+  circle.style.filter = 'drop-shadow(0 0 8px #ffaa00)';
+
+  const lbl = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+  lbl.setAttribute('x', x);
+  lbl.setAttribute('y', y + 1);
+  lbl.setAttribute('text-anchor', 'middle');
+  lbl.setAttribute('dominant-baseline', 'middle');
+  lbl.setAttribute('font-size', '4');
+  lbl.setAttribute('fill', '#0d1322');
+  lbl.setAttribute('pointer-events', 'none');
+  // lbl.textContent = 'NEW';
+
+  g.appendChild(circle);
+  g.appendChild(lbl);
+  svg.appendChild(g);
+}
+
+//  Форма добавления 
+function showAddForm() {
+  document.getElementById('addForm').classList.add('show');
+  // Авто-заполнение этажа по текущему этажу карты
+  document.getElementById('fFloor').value = mapFloor;
+  // Активируем режим размещения
+  startPlacingMode();
+}
+
+function hideAddForm() {
+  document.getElementById('addForm').classList.remove('show');
+  stopPlacingMode();
+  clearForm();
+  // Убираем превью маркер
+  const prev = document.querySelector('#preview-marker');
+  if (prev) prev.remove();
+}
+
+function startPlacingMode() {
+  placingMode = true;
+  document.getElementById('svgContainer').classList.add('placing');
+  document.getElementById('placeModeIndicator').classList.add('show');
+  document.getElementById('normalModeLabel').style.display = 'none';
+}
+
+function stopPlacingMode() {
+  placingMode = false;
+  document.getElementById('svgContainer').classList.remove('placing');
+  document.getElementById('placeModeIndicator').classList.remove('show');
+  document.getElementById('normalModeLabel').style.display = '';
+}
+
+function onFloorChange() {
+  const newFloor = parseInt(document.getElementById('fFloor').value);
+  if (newFloor !== mapFloor) {
+    mapFloor = newFloor;
+    renderMap();
+    // Снова активируем режим размещения после смены этажа
+    if (document.getElementById('addForm').classList.contains('show')) {
+      startPlacingMode();
+    }
+  }
+}
+
+function clearForm() {
+  ['fId','fName','fLocation','fDesc'].forEach(id => document.getElementById(id).value = '');
+  ['fX','fY'].forEach(id => {
+    const el = document.getElementById(id);
+    el.value = '';
+    el.classList.remove('coord-filled');
+  });
+  document.getElementById('fStatus').value = 'online';
+  document.getElementById('coordHint').textContent = '▶ Кликните по карте, чтобы выбрать место установки камеры';
+  document.getElementById('coordHint').classList.remove('done');
+}
+
+async function saveCamera() {
+  const id     = document.getElementById('fId').value.trim();
+  const name   = document.getElementById('fName').value.trim();
+  const floor  = parseInt(document.getElementById('fFloor').value);
+  const x      = parseFloat(document.getElementById('fX').value);
+  const y      = parseFloat(document.getElementById('fY').value);
+
+  if (!id || !name) { showToast('Заполните ID и название', 'error'); return; }
+  if (isNaN(x) || isNaN(y)) { showToast('Выберите место на карте', 'error'); return; }
+
+  const payload = {
+    id, name, floor, svg_x: x, svg_y: y,
+    status:      document.getElementById('fStatus').value,
+    description: document.getElementById('fDesc').value.trim(),
+    location:    document.getElementById('fLocation').value.trim(),
+    extra_data:  {}
+  };
+
+  const res = await fetch('/api/cameras', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  });
+
+  if (res.ok) {
+    showToast('Камера добавлена ✓', 'success');
+    hideAddForm();
+    await loadCameras();
+  } else {
+    const data = await res.json();
+    showToast(data.error || 'Ошибка сохранения', 'error');
+  }
+}
+
+//  Статус 
+async function toggleStatus(id) {
+  const res = await fetch(`/api/cameras/${id}/toggle`, { method: 'POST' });
+  if (res.ok) {
+    await loadCameras();
+  }
+}
+
+// Удаление 
+function askDelete(id, name) {
+  pendingDelete = id;
+  document.getElementById('confirmText').textContent = `Удалить камеру "${name}" (${id})?\nДействие необратимо.`;
+  document.getElementById('confirmModal').classList.add('show');
+}
+
+function closeModal() {
+  pendingDelete = null;
+  document.getElementById('confirmModal').classList.remove('show');
+}
+
+async function confirmDelete() {
+  if (!pendingDelete) return;
+  const res = await fetch(`/api/cameras/${pendingDelete}`, { method: 'DELETE' });
+  closeModal();
+  if (res.ok) {
+    showToast('Камера удалена', 'success');
+    await loadCameras();
+  }
+}
+
+//  Toast 
+function showToast(msg, type = '') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = `toast ${type} show`;
+  setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+//  Zoom & Pan 
+function applyTransform() {
+  const svg = document.querySelector('#svgContainer svg');
+  if (svg) svg.style.transform = `translate(${panX}px, ${panY}px) scale(${scale})`;
+}
+
+function zoomIn()    { scale = Math.min(scale * 1.2, 5); applyTransform(); }
+function zoomOut()   { scale = Math.max(scale / 1.2, 0.3); applyTransform(); }
+function zoomReset() { scale = 1; panX = 0; panY = 0; applyTransform(); }
+
+function setupDrag() {
+  const container = document.getElementById('svgContainer');
+
+  container.addEventListener('contextmenu', e => e.preventDefault());
+  container.addEventListener('mousedown', e => {
+
+    // if (placingMode) return;
+    if (e.button === 0) return; // ЛКМ — для размещения
+    dragging = true;
+    startX = e.clientX - panX;
+    startY = e.clientY - panY;
+  });
+
+  document.addEventListener('mousemove', e => {
+    if (!dragging) return;
+    panX = e.clientX - startX;
+    panY = e.clientY - startY;
+    applyTransform();
+  });
+
+  document.addEventListener('mouseup', () => { dragging = false; });
+
+  container.addEventListener('wheel', e => {
+    e.preventDefault();
+    const delta = e.deltaY > 0 ? 0.9 : 1.1;
+    scale = Math.min(Math.max(scale * delta, 0.3), 5);
+    applyTransform();
+  }, { passive: false });
+}
+
+//  Auth 
+async function logout() {
+  await fetch('/api/logout', { method: 'POST' });
+  window.location.href = '/login';
+}
+
+loadCameras();
+</script>
+</body>
+</html>

@@ -1,0 +1,886 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Мониторинг камер — Школа 2120</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:        #515e78;
+    --panel:     #0d1322;
+    --panel2:    #111827;
+    --border:    #1e2d4a;
+    --accent:    #00d4ff;
+    --accent2:   #0066ff;
+    --danger:    #ff3b5c;
+    --warn:      #ffaa00;
+    --text:      #c8d8f0;
+    --text-dim:  #4a6080;
+    --green:     #00ff88;
+    --mono:      'Share Tech Mono', monospace;
+    --sans:      'Rajdhani', sans-serif;
+    --sidebar:   260px;
+    --header:    56px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  /* ── Header ── */
+  header {
+    height: var(--header);
+    background: var(--panel);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    padding: 0 20px;
+    gap: 16px;
+    flex-shrink: 0;
+    position: relative;
+    z-index: 100;
+  }
+
+  header::after {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--accent), transparent);
+    opacity: 0.4;
+  }
+
+  .header-logo {
+    font-family: var(--mono);
+    font-size: 13px;
+    color: var(--accent);
+    letter-spacing: 2px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .header-logo svg { width: 20px; height: 20px; }
+
+  .header-divider {
+    width: 1px; height: 24px;
+    background: var(--border);
+  }
+
+  .header-title {
+    font-size: 16px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    color: var(--text);
+  }
+
+  .header-right {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .status-badge {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--text-dim);
+    letter-spacing: 1px;
+  }
+
+  .status-dot {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: var(--green);
+    box-shadow: 0 0 8px var(--green);
+    animation: blink 2s infinite;
+  }
+
+  @keyframes blink { 0%,100%{opacity:1}50%{opacity:.3} }
+
+  .user-info {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text-dim);
+    letter-spacing: 1px;
+  }
+
+  .btn-icon {
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 6px 12px;
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text-dim);
+    cursor: pointer;
+    letter-spacing: 1px;
+    transition: all .2s;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .btn-icon:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+
+  /* ── Layout ── */
+  .main {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+  }
+
+  /* ── Sidebar ── */
+  .sidebar {
+    width: var(--sidebar);
+    background: var(--panel);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0;
+    overflow: hidden;
+  }
+
+  .sidebar-section {
+    padding: 16px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .section-label {
+    font-family: var(--mono);
+    font-size: 9px;
+    letter-spacing: 3px;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    margin-bottom: 12px;
+  }
+
+  /* Выбор этажа */
+  .floor-btns {
+    display: flex;
+    gap: 6px;
+  }
+
+  .floor-btn {
+    flex: 1;
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 8px;
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--text-dim);
+    cursor: pointer;
+    transition: all .2s;
+    letter-spacing: 1px;
+  }
+
+  .floor-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+  .floor-btn.active {
+    background: rgba(0,212,255,0.1);
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+
+  /* Статистика */
+  .stats-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+
+  .stat-card {
+    background: var(--panel2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px;
+    text-align: center;
+  }
+
+  .stat-value {
+    font-family: var(--mono);
+    font-size: 22px;
+    font-weight: 700;
+    margin-bottom: 2px;
+  }
+
+  .stat-value.green { color: var(--green); text-shadow: 0 0 10px var(--green); }
+  .stat-value.red   { color: var(--danger); text-shadow: 0 0 10px var(--danger); }
+
+  .stat-label {
+    font-family: var(--mono);
+    font-size: 9px;
+    letter-spacing: 1px;
+    color: var(--text-dim);
+  }
+
+  /* Список камер */
+  .camera-list {
+    flex: 1;
+    overflow-y: auto;
+    padding: 8px;
+  }
+
+  .camera-list::-webkit-scrollbar { width: 4px; }
+  .camera-list::-webkit-scrollbar-track { background: transparent; }
+  .camera-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+  .camera-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background .15s;
+    margin-bottom: 2px;
+  }
+
+  .camera-item:hover { background: rgba(255,255,255,0.04); }
+  .camera-item.selected { background: rgba(0,212,255,0.08); }
+
+  .cam-indicator {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .cam-indicator.online {
+    background: var(--green);
+    box-shadow: 0 0 6px var(--green);
+    animation: blink 2s infinite;
+  }
+
+  .cam-indicator.offline {
+    background: var(--danger);
+    box-shadow: 0 0 6px var(--danger);
+  }
+
+  .cam-name {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text);
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .cam-floor-badge {
+    font-family: var(--mono);
+    font-size: 9px;
+    color: var(--text-dim);
+    letter-spacing: 1px;
+  }
+
+  /* ── Map area ── */
+  .map-area {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    position: relative;
+  }
+
+  .map-toolbar {
+    padding: 10px 16px;
+    background: var(--panel);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--text-dim);
+    letter-spacing: 1px;
+    flex-shrink: 0;
+  }
+
+  .map-toolbar span { color: var(--accent); }
+
+  .map-container {
+    flex: 1;
+    position: relative;
+    overflow: hidden;
+    background-image:
+      linear-gradient(rgba(0,212,255,0.02) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,212,255,0.02) 1px, transparent 1px);
+    background-size: 30px 30px;
+  }
+
+  #svgContainer {
+    width: 100%;
+    height: 100%;
+    cursor: grab;
+    user-select: none;
+  }
+
+  #svgContainer:active { cursor: grabbing; }
+
+  #svgContainer svg {
+    width: 100%;
+    height: 100%;
+  }
+
+  /* Маркеры камер */
+  .cam-marker {
+    cursor: pointer;
+    transition: transform .15s;
+    transform-origin: center;
+  }
+
+  .cam-marker:hover circle {
+  stroke: #ffffff;
+  stroke-width: 3;
+  }
+
+  /* ── Попап ── */
+  .popup {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 0;
+    min-width: 240px;
+    box-shadow: 0 16px 48px rgba(0,0,0,0.6);
+    overflow: hidden;
+  }
+
+  .popup.show { display: block; }
+
+  .popup-header {
+    padding: 14px 16px 10px;
+    border-bottom: 1px solid var(--border);
+    position: relative;
+  }
+
+  .popup-header::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: var(--accent);
+  }
+
+  .popup-header.offline::before { background: var(--danger); }
+
+  .popup-id {
+    font-family: var(--mono);
+    font-size: 9px;
+    letter-spacing: 2px;
+    color: var(--text-dim);
+    margin-bottom: 4px;
+  }
+
+  .popup-name {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--text);
+  }
+
+  .popup-body {
+    padding: 14px 16px;
+  }
+
+  .popup-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+    font-family: var(--mono);
+    font-size: 11px;
+  }
+
+  .popup-row:last-child { margin-bottom: 0; }
+
+  .popup-key {
+    color: var(--text-dim);
+    letter-spacing: 1px;
+    min-width: 80px;
+  }
+
+  .popup-val { color: var(--text); }
+
+  .popup-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 2px 10px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 700;
+  }
+
+  .popup-status.online {
+    background: rgba(0,255,136,0.1);
+    color: var(--green);
+    border: 1px solid rgba(0,255,136,0.3);
+  }
+
+  .popup-status.offline {
+    background: rgba(255,59,92,0.1);
+    color: var(--danger);
+    border: 1px solid rgba(255,59,92,0.3);
+  }
+
+  .popup-close {
+    position: absolute;
+    top: 10px; right: 10px;
+    background: transparent;
+    border: none;
+    color: var(--text-dim);
+    cursor: pointer;
+    font-size: 16px;
+    line-height: 1;
+    padding: 2px 6px;
+    border-radius: 4px;
+    transition: color .2s;
+  }
+
+  .popup-close:hover { color: var(--text); }
+
+  /* Zoom controls */
+  .zoom-controls {
+    position: absolute;
+    bottom: 20px;
+    right: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    z-index: 50;
+  }
+
+  .zoom-btn {
+    width: 36px; height: 36px;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text-dim);
+    font-size: 18px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all .2s;
+  }
+
+  .zoom-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+  /* Legend */
+  .legend {
+    position: absolute;
+    bottom: 20px;
+    left: 20px;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 14px;
+    display: flex;
+    gap: 16px;
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--text-dim);
+    letter-spacing: 1px;
+    z-index: 50;
+  }
+
+  .legend-item { display: flex; align-items: center; gap: 6px; }
+
+  .legend-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+  }
+
+  .legend-dot.online { background: var(--green); box-shadow: 0 0 6px var(--green); }
+  .legend-dot.offline { background: var(--danger); }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-logo">
+    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
+      <g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round">
+
+      </g><g id="SVGRepo_iconCarrier"> 
+        <path d="M3.23047 15.6021V19.6021M3.23047 17.6021H6.10979C6.51355 17.6021 6.71543 17.6021 6.88849 17.5357C7.04136 17.477 7.17748 17.3816 7.28489 17.258C7.40648 17.1181 7.47547 16.9283 7.61345 16.5489L9.23047 12.1021M16.2305 14.1021L17.9671 14.9704C18.4144 15.1941 18.638 15.3059 18.8584 15.3124C19.0525 15.3182 19.2441 15.2673 19.4098 15.166C19.5979 15.051 19.7366 14.843 20.014 14.4269L20.2251 14.1102C20.5726 13.589 20.7463 13.3284 20.7669 13.0693C20.785 12.8418 20.7248 12.615 20.5962 12.4265C20.4497 12.2117 20.1696 12.0717 19.6094 11.7916L19.2305 11.6021M4.09035 7.62803L5.96145 4.42043C6.23184 3.9569 6.36703 3.72514 6.56088 3.59657C6.73149 3.48341 6.93273 3.42534 7.13741 3.43022C7.36995 3.43575 7.60783 3.55986 8.0836 3.80809L15.9789 7.92736C16.7263 8.31731 17.1 8.51229 17.2454 8.78849C17.3725 9.02974 17.3955 9.31242 17.3092 9.57107C17.2104 9.86717 16.8732 10.1201 16.1988 10.6259L13.0216 13.0088C12.7344 13.2242 12.5908 13.3319 12.4312 13.3832C12.2901 13.4286 12.1407 13.4421 11.9938 13.4227C11.8276 13.4007 11.6671 13.3204 11.346 13.1599L4.75685 9.8653C4.22599 9.59987 3.96056 9.46716 3.81581 9.26293C3.6886 9.08344 3.62413 8.86702 3.63238 8.64718C3.64176 8.39703 3.79129 8.1407 4.09035 7.62803Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+
+        </path> 
+      </g></svg>
+    CCTV
+  </div>
+  <div class="header-divider"></div>
+  <div class="header-title">Мониторинг камер</div>
+
+  <div class="header-right">
+    <div class="status-badge">
+      <div class="status-dot"></div>
+      ОНЛАЙН
+    </div>
+    <div class="user-info">{{ username }}</div>
+    <a href="/admin" class="btn-icon">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M12 20h9M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/>
+      </svg>
+      Редактирование
+    </a>
+    <button class="btn-icon" onclick="logout()">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9"/>
+      </svg>
+      Выйти
+    </button>
+  </div>
+</header>
+
+<div class="main">
+  <aside class="sidebar">
+    <div class="sidebar-section">
+      <div class="section-label">// Этаж</div>
+      <div class="floor-btns">
+        <button class="floor-btn active" onclick="setFloor(1)" id="fb1">1</button>
+        <button class="floor-btn" onclick="setFloor(2)" id="fb2">2</button>
+        <button class="floor-btn" onclick="setFloor(3)" id="fb3">3</button>
+      </div>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="section-label">// Статус</div>
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-value green" id="statOnline">—</div>
+          <div class="stat-label">ОНЛАЙН</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value red" id="statOffline">—</div>
+          <div class="stat-label">ОФЛАЙН</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-label" style="padding: 12px 16px 4px; font-family: var(--mono); font-size: 9px; letter-spacing: 3px; color: var(--text-dim);">// Камеры на этаже</div>
+    <div class="camera-list" id="cameraList"></div>
+  </aside>
+
+  <div class="map-area">
+    <div class="map-toolbar">
+      ЭТАЖ: <span id="floorLabel">1</span>
+      &nbsp;·&nbsp; КАМЕР: <span id="camCountLabel">0</span>
+      <!-- &nbsp;·&nbsp; Scroll = зум, drag = перемещение -->
+    </div>
+
+    <div class="map-container">
+      <div id="svgContainer"></div>
+
+      <div class="zoom-controls">
+        <button class="zoom-btn" onclick="zoomIn()">+</button>
+        <button class="zoom-btn" onclick="zoomReset()">⊙</button>
+        <button class="zoom-btn" onclick="zoomOut()">−</button>
+      </div>
+
+      <div class="legend">
+        <div class="legend-item">
+          <div class="legend-dot online"></div> ОНЛАЙН
+        </div>
+        <div class="legend-item">
+          <div class="legend-dot offline"></div> ОФЛАЙН
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Попап -->
+<div class="popup" id="popup">
+  <div class="popup-header" id="popupHeader">
+    <div class="popup-id" id="popupId"></div>
+    <div class="popup-name" id="popupName"></div>
+    <button class="popup-close" onclick="closePopup()">×</button>
+  </div>
+  <div class="popup-body">
+    <div class="popup-row">
+      <span class="popup-key">СТАТУС</span>
+      <span class="popup-val"><span class="popup-status" id="popupStatus"></span></span>
+    </div>
+    <div class="popup-row">
+      <span class="popup-key">ЭТАЖ</span>
+      <span class="popup-val" id="popupFloor"></span>
+    </div>
+    <div class="popup-row">
+      <span class="popup-key">ЛОКАЦИЯ</span>
+      <span class="popup-val" id="popupLocation"></span>
+    </div>
+    <div class="popup-row" id="popupDescRow">
+      <span class="popup-key">ОПИСАНИЕ</span>
+      <span class="popup-val" id="popupDesc"></span>
+    </div>
+  </div>
+</div>
+
+<script>
+let currentFloor = 1;
+let cameras = [];
+let scale = 1, panX = 0, panY = 0;
+let dragging = false, startX, startY, startPanX, startPanY;
+
+// ── Загрузка данных ──────────────────────────────────────────────
+async function loadAll() {
+  const res = await fetch('/api/cameras');
+  cameras = await res.json();
+  renderSidebar();
+  renderMap();
+}
+
+function getCamsOnFloor(floor) {
+  return cameras.filter(c => c.floor === floor);
+}
+
+// ── Боковая панель ───────────────────────────────────────────────
+function renderSidebar() {
+  const all = cameras;
+  document.getElementById('statOnline').textContent  = all.filter(c => c.status === 'online').length;
+  document.getElementById('statOffline').textContent = all.filter(c => c.status === 'offline').length;
+
+  const list = document.getElementById('cameraList');
+  const floor_cams = getCamsOnFloor(currentFloor);
+  document.getElementById('camCountLabel').textContent = floor_cams.length;
+
+  list.innerHTML = floor_cams.map(c => `
+    <div class="camera-item" onclick="highlightCamera('${c.id}')">
+      <div class="cam-indicator ${c.status}"></div>
+      <div class="cam-name">${c.name}</div>
+      <div class="cam-floor-badge">Э${c.floor}</div>
+    </div>
+  `).join('');
+}
+
+//  Карта 
+async function renderMap() {
+  const container = document.getElementById('svgContainer');
+  document.getElementById('floorLabel').textContent = currentFloor;
+
+  try {
+    const res = await fetch(`/api/svg/${currentFloor}`);
+    let svgText = await res.text();
+    
+    svgText = svgText.replace(/<svg([^>]*)width="[^"]*"/, '<svg$1');
+    svgText = svgText.replace(/<svg([^>]*)height="[^"]*"/, '<svg$1');
+    svgText = svgText.replace('<svg', '<svg preserveAspectRatio="xMidYMid meet" style="width:100%;height:100%"');
+    container.innerHTML = svgText;
+  } catch {
+    container.innerHTML = `<svg viewBox="0 0 800 500" style="width:100%;height:100%">
+      <rect width="800" height="500" fill="#0d1322"/>
+      <text x="400" y="250" text-anchor="middle" fill="#4a6080" font-size="16" font-family="monospace">SVG карты не найден</text>
+    </svg>`;
+  }
+
+
+  const svg = container.querySelector('svg');
+  if (!svg) return;
+
+  const vb = svg.viewBox.baseVal;
+  const vw = vb.width || 800;
+  const vh = vb.height || 500;
+
+  const overlay = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+  overlay.setAttribute('id', 'cam-overlay');
+
+  getCamsOnFloor(currentFloor).forEach(cam => {
+    const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+    g.setAttribute('class', 'cam-marker');
+    g.setAttribute('data-id', cam.id);
+
+    const color = cam.status === 'online' ? '#00ff88' : '#ff3b5c';
+    const glow  = cam.status === 'online' ? '#00ff88' : '#ff3b5c';
+
+    // Внешний пульс
+    const pulse = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+    pulse.setAttribute('cx', cam.svg_x);
+    pulse.setAttribute('cy', cam.svg_y);
+    pulse.setAttribute('r', '4');
+    pulse.setAttribute('fill', 'none');
+    pulse.setAttribute('stroke', color);
+    pulse.setAttribute('stroke-width', '1.5');
+    pulse.setAttribute('opacity', '0.4');
+    if (cam.status === 'online') {
+      pulse.style.animation = 'svgPulse 2s ease-in-out infinite';
+    }
+
+    // Основной маркер
+    const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+    circle.setAttribute('cx', cam.svg_x);
+    circle.setAttribute('cy', cam.svg_y);
+    circle.setAttribute('r', '4');          //Camera icon size control
+    circle.setAttribute('fill', color);
+    circle.setAttribute('stroke', '#0d1322');
+    circle.setAttribute('stroke-width', '1');
+    circle.style.filter = `drop-shadow(0 0 4px ${glow})`;
+
+    // Иконка камеры
+    const icon = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+    icon.setAttribute('x', cam.svg_x);
+    icon.setAttribute('y', cam.svg_y + 1);
+    icon.setAttribute('text-anchor', 'middle');
+    icon.setAttribute('dominant-baseline', 'middle');
+    icon.setAttribute('font-size', '4');
+    icon.setAttribute('fill', '#0d1322');
+    icon.setAttribute('pointer-events', 'none');
+
+
+    g.appendChild(pulse);
+    g.appendChild(circle);
+    g.appendChild(icon);
+    g.addEventListener('click', (e) => {
+      e.stopPropagation();
+      openPopup(cam, e.clientX, e.clientY);
+    });
+
+    overlay.appendChild(g);
+  });
+
+  svg.appendChild(overlay);
+
+  // Добавляем стиль анимации
+  const style = document.createElementNS('http://www.w3.org/2000/svg', 'style');
+  style.textContent = `
+    @keyframes svgPulse {
+      0%, 100% { r: 12; opacity: 0.4; }
+      50% { r: 18; opacity: 0.1; }
+    }
+  `;
+  svg.appendChild(style);
+
+  applyTransform();
+  setupDrag();
+}
+
+//Попап 
+function openPopup(cam, x, y) {
+  const popup = document.getElementById('popup');
+  document.getElementById('popupId').textContent = cam.id;
+  document.getElementById('popupName').textContent = cam.name;
+  document.getElementById('popupFloor').textContent = `${cam.floor} этаж`;
+  document.getElementById('popupLocation').textContent = cam.location || '—';
+  document.getElementById('popupDesc').textContent = cam.description || '—';
+
+  const statusEl = document.getElementById('popupStatus');
+  statusEl.textContent = cam.status === 'online' ? '● ОНЛАЙН' : '● ОФЛАЙН';
+  statusEl.className = `popup-status ${cam.status}`;
+
+  const header = document.getElementById('popupHeader');
+  header.className = `popup-header ${cam.status}`;
+
+  // Позиционирование
+  popup.style.display = 'block';
+  const pw = popup.offsetWidth, ph = popup.offsetHeight;
+  popup.style.left = Math.min(x + 12, window.innerWidth - pw - 12) + 'px';
+  popup.style.top  = Math.min(y + 12, window.innerHeight - ph - 12) + 'px';
+  popup.classList.add('show');
+}
+
+function closePopup() {
+  document.getElementById('popup').classList.remove('show');
+  document.getElementById('popup').style.display = 'none';
+}
+
+document.addEventListener('click', e => {
+  if (!document.getElementById('popup').contains(e.target)) closePopup();
+});
+
+// Этаж 
+function setFloor(f) {
+  currentFloor = f;
+  [1,2,3].forEach(i => {
+    document.getElementById(`fb${i}`).classList.toggle('active', i === f);
+  });
+  closePopup();
+  resetZoom();
+  renderSidebar();
+  renderMap();
+}
+
+//  Highlight 
+function highlightCamera(id) {
+  const cam = cameras.find(c => c.id === id);
+  if (!cam) return;
+  if (cam.floor !== currentFloor) setFloor(cam.floor);
+
+  setTimeout(() => {
+    const marker = document.querySelector(`[data-id="${id}"]`);
+    if (marker) {
+      const rect = marker.getBoundingClientRect();
+      openPopup(cam, rect.left, rect.top);
+    }
+  }, 100);
+}
+
+//  Zoom & Pan 
+function applyTransform() {
+  const svg = document.querySelector('#svgContainer svg');
+  if (svg) svg.style.transform = `translate(${panX}px, ${panY}px) scale(${scale})`;
+}
+
+function zoomIn()    { scale = Math.min(scale * 1.2, 5); applyTransform(); }
+function zoomOut()   { scale = Math.max(scale / 1.2, 0.3); applyTransform(); }
+function zoomReset() { scale = 1; panX = 0; panY = 0; applyTransform(); }
+function resetZoom() { scale = 1; panX = 0; panY = 0; }
+
+function setupDrag() {
+  const container = document.getElementById('svgContainer');
+
+  container.addEventListener('mousedown', e => {
+    dragging = true;
+    startX = e.clientX - panX;
+    startY = e.clientY - panY;
+  });
+
+  document.addEventListener('mousemove', e => {
+    if (!dragging) return;
+    panX = e.clientX - startX;
+    panY = e.clientY - startY;
+    applyTransform();
+  });
+
+  document.addEventListener('mouseup', () => { dragging = false; });
+
+  container.addEventListener('wheel', e => {
+    e.preventDefault();
+    const delta = e.deltaY > 0 ? 0.9 : 1.1;
+    scale = Math.min(Math.max(scale * delta, 0.3), 5);
+    applyTransform();
+  }, { passive: false });
+}
+
+//  Auth 
+async function logout() {
+  await fetch('/api/logout', { method: 'POST' });
+  window.location.href = '/login';
+}
+
+
+setInterval(loadAll, 30000);
+loadAll();
+</script>
+</body>
+</html>
